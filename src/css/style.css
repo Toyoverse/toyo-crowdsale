@@ -1,0 +1,48 @@
+.form-control {
+    font-size: 2rem!important;
+    text-align: center;
+}
+
+.alert-danger {
+    margin: 12px;
+    text-align: center;
+    width: 97%!important;
+}
+
+.alert-success {
+    margin: 12px;
+    text-align: center;
+    width: 97%!important;
+}
+
+.price-matic-container,
+.price-dolar-container {
+    display: block;
+}
+
+.dapp-balance {
+    font-weight: 500;
+}
+
+.wallet-address {
+    background-color: #ebebeb;
+    padding: 7px;
+    border-radius: 7px;
+    font-weight: 500;
+}
+
+a {
+    text-decoration: none!important;
+}
+
+.box {
+    padding: 10px 3px 10px 10px;
+    border-radius: 7px;
+}
+
+.countdownWidget {
+    text-align: center;
+    background-color: #F9F9F9;
+    padding: 15px;
+    font-size: 20px;
+}
