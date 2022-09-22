@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Saira Bold";
+  src: url("../../public/fonts/SairaCondensed-Bold.ttf");
+}
+
+@font-face {
+  font-family: "Barlow Medium";
+  src: url("../../public/fonts/Barlow-Medium.ttf");
+}
+
+#__next {
+  min-width: fit-content;
+}
+
+
