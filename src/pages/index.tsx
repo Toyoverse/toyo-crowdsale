@@ -1,4 +1,6 @@
 import type { NextPage } from 'next';
+import { useMetamask, useDisconnect } from '@thirdweb-dev/react';
+import { toast } from 'react-toastify';
 import Head from 'next/head';
 import Image from 'next/image';
 import BackgroundImage2 from '@assets/Site_Background.png';
@@ -22,11 +24,43 @@ import ToyoLogo2 from '@assets/icons/TOYO-BW_LOGO.png';
 import Section from 'components/Section';
 import Step from 'components/Step';
 import Button from 'components/Button';
+import { useEffect, useState } from 'react';
 
 const Home: NextPage = () => {
+  const [accountConnected, setAccountConnected] = useState(false);
+  const connectWithMetamask = useMetamask();
+  const disconnect = useDisconnect();
+
   function goToPage() {
     console.log('Button clicked');
   }
+
+  useEffect(() => {
+    async function checkAccounts() {
+      const resp = await window?.ethereum?.request({ method: 'eth_accounts' });
+
+      if (resp.length > 0) {
+        setAccountConnected(true);
+        toast('Wallet Connected!', { hideProgressBar: true, autoClose: 3000, type: 'success' });
+      }
+    }
+
+    checkAccounts();
+  }, []);
+
+  async function connectMetamask() {
+    await connectWithMetamask();
+    setAccountConnected(true);
+    toast('Wallet Connected!', { hideProgressBar: true, autoClose: 2000, type: 'success' });
+  }
+
+  async function disconnectMetamask() {
+    await disconnect();
+    setAccountConnected(false);
+    toast('Wallet Disconnected!', { hideProgressBar: true, autoClose: 2000, type: 'success' });
+  }
+
+  const year = new Date().getFullYear();
 
   return (
     <div className="overflow-hidden">
@@ -67,7 +101,11 @@ const Home: NextPage = () => {
           />
         </div>
         <div className="flex py-32">
-          <Button bg="metamask" onClick={() => console.log('Faça algo')} />
+          {accountConnected ? (
+            <Button bg={'metamask-connected'} onClick={() => disconnectMetamask()} />
+          ) : (
+            <Button bg={'metamask-login'} onClick={() => connectMetamask()} />
+          )}
           <Button bg="add-toyo" onClick={() => console.log('Faça algo')} />
         </div>
       </Section>
@@ -220,7 +258,7 @@ const Home: NextPage = () => {
           </div>
         </div>
         <div className="flex mb-16">
-          <p className="text-white font-barlow relative">Copyright 2022 Lucid Dreams. All Rights Reserved.</p>
+          <p className="text-white font-barlow relative">Copyright {year} Lucid Dreams. All Rights Reserved.</p>
         </div>
       </footer>
     </div>

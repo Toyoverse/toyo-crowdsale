@@ -1,4 +1,4 @@
-type ButtonTypes = 'metamask' | 'add-toyo';
+type ButtonTypes = 'metamask-login' | 'metamask-connected' | 'add-toyo';
 
 export type ButtonProps = {
   onClick: () => void;

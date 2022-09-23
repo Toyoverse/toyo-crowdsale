@@ -7,9 +7,14 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@metamask/providers": "^9.1.0",
+    "@thirdweb-dev/react": "^3.0.5",
+    "@thirdweb-dev/sdk": "^3.0.5",
+    "ethers": "^5.7.1",
     "next": "latest",
     "react": "18.1.0",
-    "react-dom": "18.1.0"
+    "react-dom": "18.1.0",
+    "react-toastify": "^9.0.8"
   },
   "devDependencies": {
     "@types/node": "17.0.35",
