@@ -1,9 +1,9 @@
 import type { NextPage } from 'next';
+import { useEffect, useState } from 'react';
 import { useMetamask, useDisconnect } from '@thirdweb-dev/react';
 import { toast } from 'react-toastify';
 import Head from 'next/head';
 import Image from 'next/image';
-import BackgroundImage2 from '@assets/Site_Background.png';
 import ToyoLogo from '@assets/toyo_logo---Copia.png';
 import XeonLogo from '@assets/Titlestop_bottom-2.png';
 import XeonBox from '@assets/Xeon-Pier-0-Closed-2048.png';
@@ -12,19 +12,14 @@ import MintNowButton from '@assets/buttons/mint_btt.png';
 import XeonToyoList from '@assets/HORIZONTAL_RARITY-RULE2022.png';
 import LearnMoreButton from '@assets/buttons/learn_more.png';
 import OpenSeaButton from '@assets/buttons/opensea.png';
-import DiscordIcon from '@assets/icons/discord.png';
-import TelegranIcon from '@assets/icons/telegram.png';
-import TwitterIcon from '@assets/icons/twitter.png';
-import MediumIcon from '@assets/icons/medium.png';
-import YouTubeIcon from '@assets/icons/youtube.png';
-import InstagramIcon from '@assets/icons/insta.png';
 import PolygonIcon from '@assets/icons/polygon_w.png';
 import MetamaskIcon from '@assets/icons/metamask_w.png';
 import ToyoLogo2 from '@assets/icons/TOYO-BW_LOGO.png';
 import Section from 'components/Section';
 import Step from 'components/Step';
 import Button from 'components/Button';
-import { useEffect, useState } from 'react';
+import ExternalLink from 'components/ExternalLink';
+import SocialButton from 'components/SocialButton';
 
 const Home: NextPage = () => {
   const [accountConnected, setAccountConnected] = useState(false);
@@ -70,10 +65,10 @@ const Home: NextPage = () => {
       </Head>
       <Section bg="bg-section-one">
         <div className="relative w-128 xl:h-104 h-96">
-          <Image src={ToyoLogo} alt="Section one" className="object-contain" sizes="100vw" layout="fill" />
+          <Image src={ToyoLogo} alt="Toyo logo." className="object-contain" sizes="100vw" layout="fill" />
         </div>
-        <div className="relative w-[1200px] h-80 2xl:-mt-0 lg:-mt-32 -mt-20">
-          <Image src={XeonLogo} alt="Section one" className="object-contain" sizes="100vw" layout="fill" />
+        <div className="relative w-[1200px] h-80 -mt-20">
+          <Image src={XeonLogo} alt="Xeon-1 collection." className="object-contain" sizes="100vw" layout="fill" />
         </div>
       </Section>
       <Section bg="bg-main">
@@ -110,9 +105,9 @@ const Home: NextPage = () => {
         </div>
       </Section>
       <Section bg="bg-main">
-        <div className="flex flex-col mb-24">
+        <div className="flex flex-col">
           <div className="relative w-96 h-96">
-            <Image src={XeonBox} layout="fill" alt="Section one" objectFit="contain" priority />
+            <Image src={XeonBox} layout="fill" alt="Xeon box." objectFit="contain" priority />
           </div>
           <div className="mt-4">
             <h1 className="font-bold text-center text-4xl text-white font-saira">Xeon-1 Box</h1>
@@ -121,7 +116,7 @@ const Home: NextPage = () => {
           <div className="flex flex-row items-center justify-between mt-4 mx-16">
             <div className="flex items-center ml-4">
               <div className="relative w-7 h-7">
-                <Image src={MaticIcon} layout="fill" alt="Section one" objectFit="contain" priority />
+                <Image src={MaticIcon} layout="fill" alt="Matic icon." objectFit="contain" priority />
               </div>
               <p className="text-blue-400 text-4xl font-barlow">110</p>
             </div>
@@ -144,7 +139,7 @@ const Home: NextPage = () => {
           </div>
           <div className="flex flex-row justify-center">
             <button className="relative w-64 h-28" onClick={goToPage}>
-              <Image src={MintNowButton} layout="fill" alt="Section one" objectFit="contain" priority />
+              <Image src={MintNowButton} layout="fill" alt="Mint now button." objectFit="contain" priority />
             </button>
           </div>
           <div className="flex flex-col mx-16">
@@ -180,7 +175,7 @@ const Home: NextPage = () => {
           <h1 className="font-bold text-center text-7xl text-white font-saira">Xeon-1 / Pier-0 Toyos</h1>
         </div>
         <div className="relative w-full h-[628px]">
-          <Image src={XeonToyoList} layout="fill" alt="Section one" objectFit="contain" priority />
+          <Image src={XeonToyoList} layout="fill" alt="Xeon toyo list." objectFit="contain" priority />
         </div>
       </Section>
       <Section bg="bg-main">
@@ -205,60 +200,49 @@ const Home: NextPage = () => {
         </div>
         <div className="flex py-32">
           <button className="relative w-60 h-40 mx-12" onClick={goToPage}>
-            <Image src={LearnMoreButton} layout="fill" alt="Section one" objectFit="contain" priority />
+            <Image src={LearnMoreButton} layout="fill" alt="Learn more button." objectFit="contain" priority />
           </button>
           <button className="relative w-80 h-40 mx-12" onClick={goToPage}>
-            <Image src={OpenSeaButton} layout="fill" alt="Section one" objectFit="contain" priority />
+            <Image src={OpenSeaButton} layout="fill" alt="OpenSea button." objectFit="contain" priority />
           </button>
         </div>
       </Section>
-      <footer className="flex flex-col items-center justify-start relative min-w-full h-80 2xl:px-96 lg:px-40 px-24">
-        <Image src={BackgroundImage2} layout="fill" alt="Section one" objectFit="cover" priority />
+      <footer className="flex flex-col items-center justify-start bg-main bg-cover min-w-full h-80 px-24 lg:px-40 3xl:px-96">
         <div className="flex flex-row flex-1 items-center justify-between min-w-full">
           <div className="flex flex-row">
             <div className="relative w-40 h-40">
-              <Image src={ToyoLogo2} layout="fill" alt="Section one" objectFit="contain" priority />
+              <Image src={ToyoLogo2} layout="fill" alt="Second toyo logo." objectFit="contain" priority />
             </div>
-            <div className="relative ml-4 mt-4">
-              <p className="text-white font-barlow">Home</p>
-              <p className="text-white font-barlow">Toyo Whitepaper</p>
-              <p className="text-white font-barlow">Xeon-1 Drop Article</p>
-              <p className="text-white font-barlow">Our Team</p>
+            <div className="flex flex-col m-4">
+              <a href="#home" className="text-white font-barlow">
+                Home
+              </a>
+              <ExternalLink link="https://whitepaper.toyoverse.com/" text="Toyo Whitepaper" />
+              <ExternalLink link="https://www.google.com" text="Xeon-1 Drop Article" />
+              <ExternalLink link="https://www.google.com" text="Our Team" />
             </div>
           </div>
           <div className="flex flex-col">
             <div className="flex flex-row">
-              <div className="relative w-8 h-8 mr-2">
-                <Image src={DiscordIcon} layout="fill" alt="Section one" objectFit="contain" priority />
-              </div>
-              <div className="relative w-8 h-8 mr-2">
-                <Image src={TelegranIcon} layout="fill" alt="Section one" objectFit="contain" priority />
-              </div>
-              <div className="relative w-8 h-8 mr-2">
-                <Image src={TwitterIcon} layout="fill" alt="Section one" objectFit="contain" priority />
-              </div>
-              <div className="relative w-8 h-8 mr-2">
-                <Image src={MediumIcon} layout="fill" alt="Section one" objectFit="contain" priority />
-              </div>
-              <div className="relative w-8 h-8 mr-2">
-                <Image src={YouTubeIcon} layout="fill" alt="Section one" objectFit="contain" priority />
-              </div>
-              <div className="relative w-8 h-8 mr-2">
-                <Image src={InstagramIcon} layout="fill" alt="Section one" objectFit="contain" priority />
-              </div>
+              <SocialButton bg="discord" link="https://discord.gg/RwegM2w6zv" />
+              <SocialButton bg="telegram" link="https://t.me/toyoverse" />
+              <SocialButton bg="twitter" link="https://twitter.com/ToyoVerse" />
+              <SocialButton bg="medium" link="https://medium.com/@toyoverse" />
+              <SocialButton bg="youtube" link="https://www.youtube.com/channel/UCKwCI_rs6JyzmMn6TYNVnsA" />
+              <SocialButton bg="instagram" link="https://www.instagram.com/toyoverse/" />
             </div>
             <div className="flex flex-row mt-12">
-              <div className="relative w-28 h-8 mr-8">
-                <Image src={PolygonIcon} layout="fill" alt="Section one" objectFit="contain" priority />
+              <div className="relative w-28 h-8 mr-4">
+                <Image src={PolygonIcon} layout="fill" alt="Polygon icon." objectFit="contain" priority />
               </div>
               <div className="relative w-28 h-8">
-                <Image src={MetamaskIcon} layout="fill" alt="Section one" objectFit="contain" priority />
+                <Image src={MetamaskIcon} layout="fill" alt="Metamask icon." objectFit="contain" priority />
               </div>
             </div>
           </div>
         </div>
         <div className="flex mb-16">
-          <p className="text-white font-barlow relative">Copyright {year} Lucid Dreams. All Rights Reserved.</p>
+          <p className="text-white font-barlow relative">Copyright © {year} Lucid Dreams. All Rights Reserved.</p>
         </div>
       </footer>
     </div>

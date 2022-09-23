@@ -13,11 +13,21 @@ function Button({ onClick, bg }: ButtonProps) {
   function renderImage() {
     switch (bg) {
       case 'metamask-login':
-        return <Image src={ButtonMetamaskLogin} layout="fill" alt="Section one" objectFit="contain" priority />;
+        return (
+          <Image src={ButtonMetamaskLogin} layout="fill" alt="Metamask login button." objectFit="contain" priority />
+        );
       case 'metamask-connected':
-        return <Image src={ButtonMetamaskConnected} layout="fill" alt="Section one" objectFit="contain" priority />;
+        return (
+          <Image
+            src={ButtonMetamaskConnected}
+            layout="fill"
+            alt="Metamask connected button."
+            objectFit="contain"
+            priority
+          />
+        );
       case 'add-toyo':
-        return <Image src={ButtonAddToyo} layout="fill" alt="Section one" objectFit="contain" priority />;
+        return <Image src={ButtonAddToyo} layout="fill" alt="Add toyo button." objectFit="contain" priority />;
       default:
         break;
     }
