@@ -1,4 +1,10 @@
-type ButtonTypes = 'discord' | 'telegram' | 'twitter' | 'medium' | 'youtube' | 'instagram';
+type ButtonTypes =
+  | 'discord'
+  | 'telegram'
+  | 'twitter'
+  | 'medium'
+  | 'youtube'
+  | 'instagram';
 
 export type SocialButtonProps = {
   link: string;
