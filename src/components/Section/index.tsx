@@ -5,6 +5,7 @@ function Section({ children, bg }: SectionProps) {
 
   return (
     <section
+      id={bg === 'bg-section-one' ? 'home' : 'section'}
       className={`flex flex-col items-center ${justifyContent} min-h-screen ${bg} bg-cover bg-center lg:px-36 sm:px-24 px-12`}
     >
       {children}

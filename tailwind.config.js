@@ -1,18 +1,15 @@
 /** @type {import('tailwindcss').Config} */
-
-const defaultTheme = require('tailwindcss/defaultTheme')
-
 module.exports = {
   content: [
     './src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
-    screens: {
-      'xs': '475px',
-      '2xl': '1536px',
-      ...defaultTheme.screens,
-    },
     extend: {
+      screens: {
+        'xs': '475px',
+        '2xl': '1536px',
+        '3xl': '1600px',
+      },
       backgroundImage: {
         'section-one': "url('/assets/Site_HEADER.png')",
         'main': "url('/assets/Site_Background.png')",
