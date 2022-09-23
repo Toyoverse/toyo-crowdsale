@@ -11,7 +11,10 @@ const supportedChains = [ChainId.Polygon, ChainId.Mumbai];
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <ThirdwebProvider supportedChains={supportedChains} desiredChainId={activeChainId}>
+    <ThirdwebProvider
+      supportedChains={supportedChains}
+      desiredChainId={activeChainId}
+    >
       <Component {...pageProps} />
       <ToastContainer />
     </ThirdwebProvider>

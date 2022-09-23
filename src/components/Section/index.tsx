@@ -1,7 +1,8 @@
 import { SectionProps } from './types';
 
 function Section({ children, bg }: SectionProps) {
-  const justifyContent = bg === 'bg-section-one' ? 'justify-start' : 'justify-center';
+  const justifyContent =
+    bg === 'bg-section-one' ? 'justify-start' : 'justify-center';
 
   return (
     <section
