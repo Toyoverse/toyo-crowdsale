@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import Head from 'next/head';
 import Image from 'next/image';
 import ToyoLogo from '@assets/toyo_logo---Copia.png';
-import XeonLogo from '@assets/Titlestop_bottom-2.png';
+import XeonLogo from '@assets/TITLESTOP_BOTTOM-2.png';
 import XeonBox from '@assets/Xeon-Pier-0-Closed-2048.png';
 import MaticIcon from '@assets/buttons/matic_icon_1matic_icon.png';
 import MintNowButton from '@assets/buttons/mint_btt.png';
