@@ -1,23 +1,48 @@
 import '../styles/globals.css';
 import 'react-toastify/dist/ReactToastify.css';
 import type { AppProps } from 'next/app';
+import {
+  Hydrate,
+  QueryClient,
+  QueryClientProvider,
+  DehydratedState,
+} from '@tanstack/react-query';
 import { ToastContainer } from 'react-toastify';
 import { ChainId, ThirdwebProvider } from '@thirdweb-dev/react';
 
-// check which one we will work on, maybe get this from somewhere
 const activeChainId = ChainId.Mumbai;
 
 const supportedChains = [ChainId.Polygon, ChainId.Mumbai];
 
-function MyApp({ Component, pageProps }: AppProps) {
+function MyApp({
+  Component,
+  pageProps,
+}: AppProps<{ dehydratedState: DehydratedState }>) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        staleTime: Infinity,
+        cacheTime: 1 * 60 * 1000,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+      },
+    },
+  });
+
   return (
-    <ThirdwebProvider
-      supportedChains={supportedChains}
-      desiredChainId={activeChainId}
-    >
-      <Component {...pageProps} />
-      <ToastContainer />
-    </ThirdwebProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThirdwebProvider
+        supportedChains={supportedChains}
+        desiredChainId={activeChainId}
+      >
+        <Hydrate state={pageProps.dehydratedState}>
+          <Component {...pageProps} />
+          <ToastContainer />
+        </Hydrate>
+      </ThirdwebProvider>
+    </QueryClientProvider>
   );
 }
 

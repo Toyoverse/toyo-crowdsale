@@ -1,9 +1,9 @@
 import type { NextPage } from 'next';
+import BN from 'bn.js';
 import Web3 from 'web3';
 import { AbiItem } from 'web3-utils';
 import { Contract } from 'web3-eth-contract';
 import { useEffect, useState } from 'react';
-import { ChainId } from '@thirdweb-dev/react';
 import { toast } from 'react-toastify';
 import Head from 'next/head';
 import Image from 'next/image';
@@ -23,8 +23,9 @@ import Step from 'components/Step';
 import Button from 'components/Button';
 import ExternalLink from 'components/ExternalLink';
 import SocialButton from 'components/SocialButton';
-import NftTokenCrowdsale from 'contracts/NftTokenCrowdsale.json';
 import QuantityList from 'components/QuantityList';
+import NftTokenCrowdsale from 'contracts/NftTokenCrowdsale.json';
+import ToyoGovernanceToken from 'contracts/ToyoGovernanceToken.json';
 
 interface MetamaskRPCError {
   code: number;
@@ -45,10 +46,14 @@ const Home: NextPage = () => {
   const [web3, setWeb3] = useState<Web3 | null>(null);
   const [address, setAddress] = useState(null);
   const [contract, setContract] = useState<Contract | null>(null);
+  const [initialToyoPrice, setInitialToyoPrice] = useState('0');
+  const [selectedQuantity, setSelectedQuantity] = useState('1');
   const [minted, setMinted] = useState(0);
   const [maxSupply, setMaxSupply] = useState(0);
   const [purchaseCap, setPurchaseCap] = useState(1);
   const [accountConnected, setAccountConnected] = useState(false);
+
+  const totalPrice = Number(initialToyoPrice) * Number(selectedQuantity);
 
   useEffect(() => {
     async function isMetamaskInstalled() {
@@ -58,6 +63,7 @@ const Home: NextPage = () => {
         });
 
         if (resp.length > 0) {
+          setAccountConnected(true);
           setAddress(resp[0]);
 
           const w3 = new Web3(window.ethereum);
@@ -105,17 +111,46 @@ const Home: NextPage = () => {
     }
   }
 
+  async function refreshTokenRate() {
+    try {
+      const resp = await contract?.methods.getRate(TYPE_ID).call();
+      const etherPrice = web3?.utils.fromWei(resp, 'ether');
+
+      if (etherPrice) {
+        setInitialToyoPrice(etherPrice);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   useEffect(() => {
     if (contract) {
       async function getSupply() {
         await getTotalSupply();
         await getMaxSupply();
         await getPurchaseCap();
+        await refreshTokenRate();
       }
 
       getSupply();
     }
   }, [contract]);
+
+  useEffect(() => {
+    async function getConnectedNetwork() {
+      if (window.ethereum.request) {
+        try {
+          const resp = await window.ethereum.request({ method: 'eth_chainId' });
+          console.log('Connected to chainId: ' + resp);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
+
+    getConnectedNetwork();
+  }, []);
 
   async function addToWallet() {
     if (window.ethereum?.request) {
@@ -173,21 +208,71 @@ const Home: NextPage = () => {
     }
   }
 
-  async function switchNetwork() {
-    if (window.ethereum?.request) {
+  async function disconnectMetamask() {
+    console.log('Log');
+  }
+
+  async function approveBuy() {
+    if (window.ethereum) {
+      const toyoApproveContractAbi: AbiItem | any = ToyoGovernanceToken.abi;
+
+      const w3 = new Web3(window.ethereum);
+
+      const c = new w3.eth.Contract(
+        toyoApproveContractAbi,
+        contracts.toyoGovernanceToken,
+      );
+
+      const toyopriceBN = web3?.utils.toBN(totalPrice);
+      const toweiToyoPrice = web3?.utils.toWei(toyopriceBN as BN, 'ether');
+
       try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: ChainId.Polygon }],
-        });
+        await c.methods
+          .approve(contracts.nftTokenCrowdsaleAddress, toweiToyoPrice)
+          .send({
+            from: address,
+          });
+
+        await buyTokens();
       } catch (error) {
         console.error(error);
       }
     }
   }
 
-  async function disconnectMetamask() {
-    console.log('Log');
+  async function buyTokens() {
+    if (!accountConnected) {
+      toast('Connect wallet!', {
+        hideProgressBar: true,
+        autoClose: 3000,
+        type: 'error',
+      });
+      return;
+    }
+
+    // TODO verify if Network is correct
+
+    // TODO verify if buy is in cooldown
+
+    // TODO implements reCAPTCHA
+
+    const quantity = web3?.utils.toBN(selectedQuantity);
+    const typeIDBN = web3?.utils.toBN(TYPE_ID);
+
+    try {
+      await contract?.methods.buyTokens(address, typeIDBN, quantity).send({
+        from: address,
+        value: 0,
+      });
+
+      toast('Tokens minted, check your wallet!', {
+        hideProgressBar: true,
+        autoClose: 3000,
+        type: 'success',
+      });
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   return (
@@ -290,7 +375,9 @@ const Home: NextPage = () => {
                   priority
                 />
               </div>
-              <p className="text-yellow-400 text-3xl font-barlow">110</p>
+              <p className="text-yellow-400 text-3xl font-barlow">
+                {totalPrice}
+              </p>
             </div>
             <div className="flex items-center">
               <p className="text-center text-white text-xl pt-2 font-barlow">
@@ -302,13 +389,13 @@ const Home: NextPage = () => {
             <div className="flex items-center">
               <p className="text-white text-2xl ml-2 font-barlow">Quantity:</p>
             </div>
-            <QuantityList quantity={purchaseCap} />
+            <QuantityList
+              quantity={purchaseCap}
+              setSelectedQuantity={setSelectedQuantity}
+            />
           </div>
           <div className="flex flex-row justify-center">
-            <button
-              className="relative w-64 h-28"
-              onClick={() => console.log('Log')}
-            >
+            <button className="relative w-64 h-28" onClick={approveBuy}>
               <Image
                 src={MintNowButton}
                 layout="fill"
@@ -387,9 +474,11 @@ const Home: NextPage = () => {
           </p>
         </div>
         <div className="flex py-32">
-          <button
+          <a
+            target="_blank"
+            href="https://link.medium.com/LWJPEI1LAtb"
+            rel="noopener noreferrer"
             className="relative w-60 h-40 mx-12"
-            onClick={() => console.log('Log')}
           >
             <Image
               src={LearnMoreButton}
@@ -398,10 +487,12 @@ const Home: NextPage = () => {
               objectFit="contain"
               priority
             />
-          </button>
-          <button
-            className="relative w-80 h-40 mx-12"
-            onClick={() => console.log('Log')}
+          </a>
+          <a
+            target="_blank"
+            href="https://opensea.io/collection/toyo-first-9-new"
+            rel="noopener noreferrer"
+            className="relative w-60 h-40 mx-12"
           >
             <Image
               src={OpenSeaButton}
@@ -410,7 +501,7 @@ const Home: NextPage = () => {
               objectFit="contain"
               priority
             />
-          </button>
+          </a>
         </div>
       </Section>
       <footer className="flex flex-col items-center justify-start bg-main bg-cover min-w-full h-80 px-24 lg:px-40 3xl:px-96">
