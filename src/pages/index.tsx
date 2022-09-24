@@ -1,13 +1,16 @@
 import type { NextPage } from 'next';
+import Web3 from 'web3';
+import { AbiItem } from 'web3-utils';
+import { Contract } from 'web3-eth-contract';
 import { useEffect, useState } from 'react';
-import { useMetamask, useDisconnect } from '@thirdweb-dev/react';
+import { ChainId } from '@thirdweb-dev/react';
 import { toast } from 'react-toastify';
 import Head from 'next/head';
 import Image from 'next/image';
 import ToyoLogo from '@assets/toyo_logo---Copia.png';
 import XeonLogo from '@assets/TITLESTOP_BOTTOM-2.png';
 import XeonBox from '@assets/Xeon-Pier-0-Closed-2048.png';
-import MaticIcon from '@assets/buttons/matic_icon_1matic_icon.png';
+import ToyoTokenIcon from '@assets/icons/toyo_token_icon.png';
 import MintNowButton from '@assets/buttons/mint_btt.png';
 import XeonToyoList from '@assets/HORIZONTAL_RARITY-RULE2022.png';
 import LearnMoreButton from '@assets/buttons/learn_more.png';
@@ -20,60 +23,172 @@ import Step from 'components/Step';
 import Button from 'components/Button';
 import ExternalLink from 'components/ExternalLink';
 import SocialButton from 'components/SocialButton';
+import NftTokenCrowdsale from 'contracts/NftTokenCrowdsale.json';
+import QuantityList from 'components/QuantityList';
+
+interface MetamaskRPCError {
+  code: number;
+  message: string;
+}
+
+const contracts = {
+  nftTokenAddress: '0x68118EDf6d9CCA7960D19f87B94583216ADd12B8',
+  nftTokenContractSymbol: 'TOYSB',
+  nftTokenCrowdsaleAddress: '0xeAC3AaC0467B16621D0e12C86541e3dd89D3f86d',
+  toyoGovernanceToken: '0x292124a29Bb14EA071EfDDB573595a12925be8Be',
+};
+
+const TYPE_ID = '16';
+const year = new Date().getFullYear();
 
 const Home: NextPage = () => {
+  const [web3, setWeb3] = useState<Web3 | null>(null);
+  const [address, setAddress] = useState(null);
+  const [contract, setContract] = useState<Contract | null>(null);
+  const [minted, setMinted] = useState(0);
+  const [maxSupply, setMaxSupply] = useState(0);
+  const [purchaseCap, setPurchaseCap] = useState(1);
   const [accountConnected, setAccountConnected] = useState(false);
-  const connectWithMetamask = useMetamask();
-  const disconnect = useDisconnect();
-
-  function goToPage() {
-    console.log('Button clicked');
-  }
 
   useEffect(() => {
-    async function checkAccounts() {
-      console.log(window.ethereum?.request);
-
+    async function isMetamaskInstalled() {
       if (window.ethereum?.request) {
-        const resp = await window.ethereum.request({ method: 'eth_accounts' });
-
-        console.log(resp);
+        const resp = await window.ethereum.request({
+          method: 'eth_requestAccounts',
+        });
 
         if (resp.length > 0) {
-          setAccountConnected(true);
-          toast('Wallet Connected!', {
-            hideProgressBar: true,
-            autoClose: 3000,
-            type: 'success',
-          });
+          setAddress(resp[0]);
+
+          const w3 = new Web3(window.ethereum);
+          setWeb3(w3);
+
+          const abi: AbiItem | any = NftTokenCrowdsale.abi;
+
+          const c = new w3.eth.Contract(
+            abi,
+            contracts.nftTokenCrowdsaleAddress,
+          );
+
+          setContract(c);
         }
       }
     }
 
-    checkAccounts();
+    isMetamaskInstalled();
   }, []);
 
-  async function connectMetamask() {
-    await connectWithMetamask();
-    setAccountConnected(true);
-    toast('Wallet Connected!', {
-      hideProgressBar: true,
-      autoClose: 2000,
-      type: 'success',
-    });
+  async function getTotalSupply() {
+    try {
+      const resp = await contract?.methods.getTotalSupply(TYPE_ID).call();
+      setMinted(resp);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function getMaxSupply() {
+    try {
+      const resp = await contract?.methods.getMaxSupply(TYPE_ID).call();
+      setMaxSupply(resp);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function getPurchaseCap() {
+    try {
+      const resp = await contract?.methods.getPurchaseCap(TYPE_ID).call();
+      setPurchaseCap(resp);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  useEffect(() => {
+    if (contract) {
+      async function getSupply() {
+        await getTotalSupply();
+        await getMaxSupply();
+        await getPurchaseCap();
+      }
+
+      getSupply();
+    }
+  }, [contract]);
+
+  async function addToWallet() {
+    if (window.ethereum?.request) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_watchAsset',
+          params: {
+            type: 'ERC20',
+            options: {
+              address: contracts.nftTokenAddress,
+              symbol: contracts.nftTokenContractSymbol,
+              decimals: 0,
+              image:
+                'https://ipfs.io/ipfs/QmUdDyL22m4wbmshvspLBpysfLPUT7r8dXnZ22Zh6F8SQz',
+            },
+          },
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }
+
+  async function connectWallet() {
+    if (window.ethereum?.request) {
+      try {
+        const account = await window.ethereum.request({
+          method: 'eth_requestAccounts',
+        });
+        setAccountConnected(true);
+        setAddress(account.toString());
+        toast('Wallet Connected!', {
+          hideProgressBar: true,
+          autoClose: 3000,
+          type: 'success',
+        });
+      } catch (error) {
+        const ethError = error as MetamaskRPCError;
+
+        if (ethError.code === 4001) {
+          toast('Please accept the request to continue', {
+            hideProgressBar: true,
+            autoClose: 3000,
+            type: 'error',
+          });
+        } else {
+          toast('An error occurred while connecting to wallet', {
+            hideProgressBar: true,
+            autoClose: 3000,
+            type: 'error',
+          });
+          console.error(ethError.message);
+        }
+      }
+    }
+  }
+
+  async function switchNetwork() {
+    if (window.ethereum?.request) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: ChainId.Polygon }],
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
   }
 
   async function disconnectMetamask() {
-    await disconnect();
-    setAccountConnected(false);
-    toast('Wallet Disconnected!', {
-      hideProgressBar: true,
-      autoClose: 2000,
-      type: 'success',
-    });
+    console.log('Log');
   }
-
-  const year = new Date().getFullYear();
 
   return (
     <div className="overflow-hidden">
@@ -140,9 +255,9 @@ const Home: NextPage = () => {
               onClick={() => disconnectMetamask()}
             />
           ) : (
-            <Button bg={'metamask-login'} onClick={() => connectMetamask()} />
+            <Button bg={'metamask-login'} onClick={() => connectWallet()} />
           )}
-          <Button bg="add-toyo" onClick={() => console.log('Faça algo')} />
+          <Button bg="add-toyo" onClick={() => addToWallet()} />
         </div>
       </Section>
       <Section bg="bg-main">
@@ -161,21 +276,21 @@ const Home: NextPage = () => {
               Xeon-1 Box
             </h1>
             <p className="text-center text-white font-barlow">
-              000 minted / 0000 max supply
+              {minted} minted / {maxSupply} max supply
             </p>
           </div>
           <div className="flex flex-row items-center justify-between mt-4 mx-16">
-            <div className="flex items-center ml-4">
-              <div className="relative w-7 h-7">
+            <div className="flex flex-row justify-center items-center ml-4">
+              <div className="relative w-7 h-7 mr-2">
                 <Image
-                  src={MaticIcon}
+                  src={ToyoTokenIcon}
                   layout="fill"
-                  alt="Matic icon."
+                  alt="Toyo token icon."
                   objectFit="contain"
                   priority
                 />
               </div>
-              <p className="text-blue-400 text-4xl font-barlow">110</p>
+              <p className="text-yellow-400 text-3xl font-barlow">110</p>
             </div>
             <div className="flex items-center">
               <p className="text-center text-white text-xl pt-2 font-barlow">
@@ -187,17 +302,13 @@ const Home: NextPage = () => {
             <div className="flex items-center">
               <p className="text-white text-2xl ml-2 font-barlow">Quantity:</p>
             </div>
-            <div className="flex">
-              <select className="block w-14 p-2 font-barlow text-lg bg-transparent border bg-gray-700 border-gray-400 text-white">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-              </select>
-            </div>
+            <QuantityList quantity={purchaseCap} />
           </div>
           <div className="flex flex-row justify-center">
-            <button className="relative w-64 h-28" onClick={goToPage}>
+            <button
+              className="relative w-64 h-28"
+              onClick={() => console.log('Log')}
+            >
               <Image
                 src={MintNowButton}
                 layout="fill"
@@ -276,7 +387,10 @@ const Home: NextPage = () => {
           </p>
         </div>
         <div className="flex py-32">
-          <button className="relative w-60 h-40 mx-12" onClick={goToPage}>
+          <button
+            className="relative w-60 h-40 mx-12"
+            onClick={() => console.log('Log')}
+          >
             <Image
               src={LearnMoreButton}
               layout="fill"
@@ -285,7 +399,10 @@ const Home: NextPage = () => {
               priority
             />
           </button>
-          <button className="relative w-80 h-40 mx-12" onClick={goToPage}>
+          <button
+            className="relative w-80 h-40 mx-12"
+            onClick={() => console.log('Log')}
+          >
             <Image
               src={OpenSeaButton}
               layout="fill"
