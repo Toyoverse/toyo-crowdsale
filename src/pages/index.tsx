@@ -155,13 +155,13 @@ const Home: NextPage = () => {
 
         const fixedPrice = parseFloat(toyoPrice.toFixed(2));
 
-        setToyoPrice(0.03);
+        setToyoPrice(0.03167);
       } catch (error) {
         const errTyped = error as Error;
 
         console.error(errTyped?.message);
       } finally {
-        setToyoPrice(0.03);
+        setToyoPrice(0.03167);
       }
     }
 
