@@ -80,7 +80,7 @@ function SocialButton({ link, bg }: SocialButtonProps) {
       target="_blank"
       href={link}
       rel="noopener noreferrer"
-      className="relative w-8 h-8 mr-4"
+      className="relative w-8 h-8 mx-2"
     >
       {renderImage()}
     </a>

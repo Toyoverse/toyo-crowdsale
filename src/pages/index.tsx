@@ -28,6 +28,11 @@ import SocialButton from 'components/SocialButton';
 import QuantityList from 'components/QuantityList';
 import NftTokenCrowdsale from 'contracts/NftTokenCrowdsale.json';
 import ToyoGovernanceToken from 'contracts/ToyoGovernanceToken.json';
+import {
+  TOYO_COINMARKETCAP_ID,
+  COINMARKETCAP_QUOTE_CURRENCY,
+  TYPE_ID,
+} from '../constants';
 
 interface MetamaskRPCError {
   code: number;
@@ -41,7 +46,6 @@ const contracts = {
   toyoGovernanceToken: '0x292124a29Bb14EA071EfDDB573595a12925be8Be',
 };
 
-const TYPE_ID = '16';
 const year = new Date().getFullYear();
 
 const Home: NextPage = () => {
@@ -55,21 +59,107 @@ const Home: NextPage = () => {
   const [purchaseCap, setPurchaseCap] = useState(1);
   const [accountConnected, setAccountConnected] = useState(false);
   const [buttonEnabled, setButtonEnabled] = useState(false);
+  const [toyoPrice, setToyoPrice] = useState(0);
+
+  const [loading, setLoading] = useState(false);
+
+  const [isSalePaused, setIsSalePaused] = useState(false);
 
   const [isMetamaskInstalled, setIsMetamaskInstalled] = useState(false);
 
   const recaptchaRef = createRef<ReCAPTCHA>();
 
   const totalPrice = Number(initialToyoPrice) * Number(selectedQuantity);
+  const totalToyoInUSD = toyoPrice * totalPrice;
+  const formattedTotalToyoInUSD = parseFloat(totalToyoInUSD.toFixed(2));
+
+  const isBtnBlocked = isSalePaused || !buttonEnabled || loading;
 
   useEffect(() => {
-    async function isMetamaskInstalled() {
+    function isMetamaskInstalled() {
       if (window.ethereum) {
         setIsMetamaskInstalled(true);
       }
     }
 
     isMetamaskInstalled();
+  }, []);
+
+  useEffect(() => {
+    async function isAccountConnected() {
+      if (window.ethereum?.request) {
+        try {
+          const account = await window.ethereum.request({
+            method: 'eth_accounts',
+          });
+
+          if (account.length > 0) {
+            setAccountConnected(true);
+            setAddress(account[0]);
+
+            const w3 = new Web3(window.ethereum);
+            setWeb3(w3);
+
+            const abi: AbiItem | any = NftTokenCrowdsale.abi;
+
+            const c = new w3.eth.Contract(
+              abi,
+              contracts.nftTokenCrowdsaleAddress,
+            );
+
+            setContract(c);
+          }
+        } catch (error) {
+          const ethError = error as MetamaskRPCError;
+
+          if (ethError.code === 4001) {
+            toast('Please accept the request to continue', {
+              hideProgressBar: true,
+              autoClose: 3000,
+              type: 'error',
+            });
+          } else {
+            toast('An error occurred while connecting to wallet', {
+              hideProgressBar: true,
+              autoClose: 3000,
+              type: 'error',
+            });
+            console.error(ethError.message);
+          }
+        }
+      }
+    }
+
+    isAccountConnected();
+  }, []);
+
+  useEffect(() => {
+    async function getTOYOPrice() {
+      try {
+        const response = await fetch('/api/coinmarketcap', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const { data } = await response.json();
+
+        const toyoPrice: number =
+          data.data[TOYO_COINMARKETCAP_ID].quote[COINMARKETCAP_QUOTE_CURRENCY]
+            .price;
+
+        const fixedPrice = parseFloat(toyoPrice.toFixed(2));
+
+        setToyoPrice(fixedPrice);
+      } catch (error) {
+        const errTyped = error as Error;
+
+        console.error(errTyped?.message);
+      }
+    }
+
+    getTOYOPrice();
   }, []);
 
   async function getTotalSupply() {
@@ -112,13 +202,23 @@ const Home: NextPage = () => {
     }
   }
 
+  async function getIsSalePaused() {
+    try {
+      const resp = await contract?.methods.isPaused(TYPE_ID).call();
+      setIsSalePaused(resp);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   useEffect(() => {
-    if (contract && isMetamaskInstalled) {
+    if (contract) {
       async function getSupply() {
         await getTotalSupply();
         await getMaxSupply();
         await getPurchaseCap();
         await refreshTokenRate();
+        await getIsSalePaused();
       }
 
       getSupply();
@@ -206,8 +306,6 @@ const Home: NextPage = () => {
           setContract(c);
         }
 
-        setAccountConnected(true);
-        setAddress(account.toString());
         toast('Wallet Connected!', {
           hideProgressBar: true,
           autoClose: 3000,
@@ -244,6 +342,8 @@ const Home: NextPage = () => {
       return;
     }
 
+    setLoading(true);
+
     const toyoApproveContractAbi: AbiItem | any = ToyoGovernanceToken.abi;
 
     const w3 = new Web3(window.ethereum);
@@ -266,6 +366,7 @@ const Home: NextPage = () => {
       await buyTokens();
     } catch (error) {
       console.error(error);
+      setLoading(false);
     }
   }
 
@@ -280,10 +381,6 @@ const Home: NextPage = () => {
     }
 
     // TODO verify if Network is correct
-
-    // TODO verify if buy is in cooldown
-
-    // TODO implements reCAPTCHA
 
     const quantity = web3?.utils.toBN(selectedQuantity);
     const typeIDBN = web3?.utils.toBN(TYPE_ID);
@@ -301,9 +398,11 @@ const Home: NextPage = () => {
       });
 
       setButtonEnabled(false);
-      triggerCooldown();
+      recaptchaRef.current?.reset();
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -324,8 +423,6 @@ const Home: NextPage = () => {
       if (response.ok) {
         setButtonEnabled(true);
       } else {
-        // Else throw an error with the message returned
-        // from the API
         console.log('CAPTCHA not ok', response.json());
       }
     } catch (error) {
@@ -335,14 +432,6 @@ const Home: NextPage = () => {
     }
   }
 
-  function triggerCooldown() {
-    setTimeout(() => {
-      setButtonEnabled(true);
-    }, 33000);
-
-    recaptchaRef.current?.reset();
-  }
-
   return (
     <div className="overflow-hidden">
       <Head>
@@ -350,7 +439,7 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Section bg="bg-section-one">
-        <div className="relative w-128 xl:h-104 h-96">
+        <div className="relative w-full xl:h-104 h-96">
           <Image
             src={ToyoLogo}
             alt="Toyo logo."
@@ -359,7 +448,7 @@ const Home: NextPage = () => {
             layout="fill"
           />
         </div>
-        <div className="relative w-[1200px] h-80 -mt-20">
+        <div className="relative w-full h-80 3xl:-mt-0 -mt-20">
           <Image
             src={XeonLogo}
             alt="Xeon-1 collection."
@@ -375,7 +464,7 @@ const Home: NextPage = () => {
             Minting Steps
           </h1>
         </div>
-        <div className="flex flex-row">
+        <div className="flex flex-col lg:flex-row">
           <Step
             title={'Step 1'}
             text={
@@ -404,13 +493,13 @@ const Home: NextPage = () => {
         <div className="flex justify-center items-center py-32">
           <Button
             bg={accountConnected ? 'metamask-connected' : 'metamask-login'}
-            onClick={() => connectWallet()}
+            onClick={connectWallet}
           />
         </div>
       </Section>
       <Section bg="bg-main">
         <div className="flex flex-col">
-          <div className="relative w-96 h-96">
+          <div className="relative w-full h-96">
             <Image
               src={XeonBox}
               layout="fill"
@@ -424,7 +513,7 @@ const Home: NextPage = () => {
               Xeon-1 Box
             </h1>
             <p className="text-center text-white font-barlow">
-              {minted} minted / {maxSupply} max supply
+              {minted || '-'} minted / {maxSupply || '-'} max supply
             </p>
           </div>
           <div className="flex flex-row items-center justify-between mt-4 mx-16">
@@ -439,12 +528,12 @@ const Home: NextPage = () => {
                 />
               </div>
               <p className="text-yellow-400 text-3xl font-barlow">
-                {totalPrice}
+                {totalPrice || '-'}
               </p>
             </div>
             <div className="flex items-center">
               <p className="text-center text-white text-xl pt-2 font-barlow">
-                -U${210 * Number(selectedQuantity)}
+                U$ {formattedTotalToyoInUSD || '-'}
               </p>
             </div>
           </div>
@@ -459,12 +548,12 @@ const Home: NextPage = () => {
           </div>
           <div className="flex flex-row justify-center">
             <button
-              disabled={!buttonEnabled}
+              disabled={isBtnBlocked}
               className="relative w-64 h-28"
               onClick={approveBuy}
             >
               <Image
-                src={buttonEnabled ? MintNowButton : MintNowButtonDisabled}
+                src={!isBtnBlocked ? MintNowButton : MintNowButtonDisabled}
                 layout="fill"
                 alt="Mint now button."
                 objectFit="contain"
@@ -548,12 +637,12 @@ const Home: NextPage = () => {
             you will finally get to meet your Toyo(s).
           </p>
         </div>
-        <div className="flex py-32">
+        <div className="flex flex-col lg:flex-row justify-center items-center py-32">
           <a
             target="_blank"
             href="https://link.medium.com/LWJPEI1LAtb"
             rel="noopener noreferrer"
-            className="relative w-60 h-40 mx-12"
+            className="relative w-60 lg:h-40 h-28 mx-12"
           >
             <Image
               src={LearnMoreButton}
@@ -567,7 +656,7 @@ const Home: NextPage = () => {
             target="_blank"
             href="https://opensea.io/collection/toyo-first-9-new"
             rel="noopener noreferrer"
-            className="relative w-80 h-40 mx-12"
+            className="relative lg:w-80 w-60 lg:h-40 h-28 mx-12"
           >
             <Image
               src={OpenSeaButton}
@@ -579,8 +668,8 @@ const Home: NextPage = () => {
           </a>
         </div>
       </Section>
-      <footer className="flex flex-col items-center justify-start bg-main bg-cover min-w-full h-80 px-24 lg:px-40 3xl:px-96">
-        <div className="flex flex-row flex-1 items-center justify-between min-w-full">
+      <footer className="flex flex-col items-center justify-center bg-main bg-cover min-w-full lg:h-80 h-104 3xl:px-96 lg:px-24 px-12">
+        <div className="flex flex-col lg:flex-row items-center justify-between min-w-full">
           <div className="flex flex-row">
             <div className="relative w-40 h-40">
               <Image
@@ -599,14 +688,9 @@ const Home: NextPage = () => {
                 link="https://whitepaper.toyoverse.com/"
                 text="Toyo Whitepaper"
               />
-              <ExternalLink
-                link="https://www.google.com"
-                text="Xeon-1 Drop Article"
-              />
-              <ExternalLink link="https://www.google.com" text="Our Team" />
             </div>
           </div>
-          <div className="flex flex-col">
+          <div className="flex flex-col justify-center items-center">
             <div className="flex flex-row">
               <SocialButton bg="discord" link="https://discord.gg/RwegM2w6zv" />
               <SocialButton bg="telegram" link="https://t.me/toyoverse" />
@@ -643,8 +727,8 @@ const Home: NextPage = () => {
             </div>
           </div>
         </div>
-        <div className="flex mb-16">
-          <p className="text-white font-barlow relative">
+        <div className="flex mt-16">
+          <p className="text-white text-center font-barlow relative">
             Copyright © {year} Lucid Dreams. All Rights Reserved.
           </p>
         </div>

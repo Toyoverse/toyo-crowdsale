@@ -2,7 +2,7 @@ import { StepProps } from './types';
 
 function Step({ title, text }: StepProps) {
   return (
-    <div className="flex flex-col px-8">
+    <div className="flex flex-col lg:px-8 lg:mb-0 mb-12">
       <h5 className="font-bold text-center text-2xl text-white font-saira">
         {title}
       </h5>
