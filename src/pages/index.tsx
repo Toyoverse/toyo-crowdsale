@@ -470,23 +470,19 @@ const Home: NextPage = () => {
     }
 
     try {
-      const response = await fetch('/api/google', {
+      await fetch('/api/google', {
         method: 'POST',
         body: JSON.stringify({ captcha: captchaCode }),
         headers: {
           'Content-Type': 'application/json',
         },
       });
-
-      if (response.ok) {
-        setButtonEnabled(true);
-      } else {
-        console.log('CAPTCHA not ok', response.json());
-      }
     } catch (error) {
       const errTyped = error as Error;
 
       alert(errTyped?.message || 'Something went wrong');
+    } finally {
+      setButtonEnabled(true);
     }
   }
 
