@@ -299,6 +299,9 @@ const Home: NextPage = () => {
         autoClose: 3000,
         type: 'success',
       });
+
+      setButtonEnabled(false);
+      triggerCooldown();
     } catch (error) {
       console.error(error);
     }
@@ -330,6 +333,14 @@ const Home: NextPage = () => {
 
       alert(errTyped?.message || 'Something went wrong');
     }
+  }
+
+  function triggerCooldown() {
+    setTimeout(() => {
+      setButtonEnabled(true);
+    }, 33000);
+
+    recaptchaRef.current?.reset();
   }
 
   return (
@@ -380,7 +391,7 @@ const Home: NextPage = () => {
           <Step
             title={'Step 3'}
             text={
-              'Select the quantity and click "MINT NOW" below the box you want to mint into your wallet. Limit of 3 boxes per transaction.'
+              'Select the quantity and click "MINT NOW" below the box you want to mint into your wallet. Limit of 9 boxes per transaction.'
             }
           />
           <Step
@@ -390,12 +401,11 @@ const Home: NextPage = () => {
             }
           />
         </div>
-        <div className="flex py-32">
+        <div className="flex justify-center items-center py-32">
           <Button
             bg={accountConnected ? 'metamask-connected' : 'metamask-login'}
             onClick={() => connectWallet()}
           />
-          <Button bg="add-toyo" onClick={() => addToWallet()} />
         </div>
       </Section>
       <Section bg="bg-main">
@@ -434,7 +444,7 @@ const Home: NextPage = () => {
             </div>
             <div className="flex items-center">
               <p className="text-center text-white text-xl pt-2 font-barlow">
-                -U$158
+                -U${210 * Number(selectedQuantity)}
               </p>
             </div>
           </div>
@@ -470,14 +480,14 @@ const Home: NextPage = () => {
               onChange={onReCAPTCHAChange}
             />
           </div>
-          <div className="flex flex-col mx-16">
+          <div className="flex flex-col mx-12">
             <div className="flex flex-row justify-between">
               <p className="text-white font-barlow">Common Edition</p>
-              <p className="text-white font-barlow">50%</p>
+              <p className="text-white font-barlow">52%</p>
             </div>
             <div className="flex flex-row justify-between">
               <p className="text-uncommon font-barlow">Uncommon Edition</p>
-              <p className="text-uncommon font-barlow">34%</p>
+              <p className="text-uncommon font-barlow">32%</p>
             </div>
             <div className="flex flex-row justify-between">
               <p className="text-rare font-barlow">Rare Edition</p>
@@ -499,7 +509,7 @@ const Home: NextPage = () => {
         </div>
       </Section>
       <Section bg="bg-main">
-        <div className="flex py-12">
+        <div className="flex py-12 mt-16">
           <h1 className="font-bold text-center text-7xl text-white font-saira">
             Xeon-1 / Pier-0 Toyos
           </h1>
@@ -557,7 +567,7 @@ const Home: NextPage = () => {
             target="_blank"
             href="https://opensea.io/collection/toyo-first-9-new"
             rel="noopener noreferrer"
-            className="relative w-60 h-40 mx-12"
+            className="relative w-80 h-40 mx-12"
           >
             <Image
               src={OpenSeaButton}

@@ -11,7 +11,3 @@
   font-family: "Barlow Medium";
   src: url("../../public/fonts/Barlow-Medium.ttf");
 }
-
-#__next {
-  min-width: fit-content;
-}
