@@ -16,7 +16,7 @@ export default async function handler(
 
     try {
       const response = await fetch(
-        `https://www.google.com/recaptcha/api/siteverify?secret=6Ld-1C0iAAAAAPwJ2nMN8lnUyQSdqfM2O8PcEzgX&response=${captcha}`,
+        `https://www.google.com/recaptcha/api/siteverify?secret=6Lcb1DAiAAAAAMO2z_lV4JUoAigrTYU32FbB4mjT&response=${captcha}`,
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',

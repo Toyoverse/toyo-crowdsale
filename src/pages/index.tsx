@@ -33,6 +33,7 @@ import {
   COINMARKETCAP_QUOTE_CURRENCY,
   TYPE_ID,
   MUMBAI_CHAIN_ID,
+  POLYGON_MAINNET,
 } from '../constants';
 
 interface MetamaskRPCError {
@@ -41,10 +42,10 @@ interface MetamaskRPCError {
 }
 
 const contracts = {
-  nftTokenAddress: '0x68118EDf6d9CCA7960D19f87B94583216ADd12B8',
+  nftTokenAddress: '0x5c29302b5ae9e99f866704e28528d5be9b7b6a40',
   nftTokenContractSymbol: 'TOYSB',
-  nftTokenCrowdsaleAddress: '0xeAC3AaC0467B16621D0e12C86541e3dd89D3f86d',
-  toyoGovernanceToken: '0x292124a29Bb14EA071EfDDB573595a12925be8Be',
+  nftTokenCrowdsaleAddress: '0x7851a8a7A95f743d2AA9f54e791DB432502f0cBe',
+  toyoGovernanceToken: '0x3cFA087AA1A74e18676a875de69c49563AFA803D',
 };
 
 const year = new Date().getFullYear();
@@ -67,7 +68,7 @@ const Home: NextPage = () => {
   const [isSalePaused, setIsSalePaused] = useState(false);
 
   const [isMetamaskInstalled, setIsMetamaskInstalled] = useState(false);
-  const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
+  const [isCooldownActive, setIsCooldownActive] = useState(false);
 
   const recaptchaRef = createRef<ReCAPTCHA>();
 
@@ -75,7 +76,8 @@ const Home: NextPage = () => {
   const totalToyoInUSD = toyoPrice * totalPrice;
   const formattedTotalToyoInUSD = parseFloat(totalToyoInUSD.toFixed(2));
 
-  const isBtnBlocked = isSalePaused || !buttonEnabled || loading;
+  const isBtnBlocked =
+    isSalePaused || !buttonEnabled || loading || isCooldownActive;
 
   useEffect(() => {
     function isMetamaskInstalled() {
@@ -236,7 +238,7 @@ const Home: NextPage = () => {
       window.ethereum
         .request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: MUMBAI_CHAIN_ID }],
+          params: [{ chainId: POLYGON_MAINNET }],
         })
         .catch((switchError) => {
           // This error code indicates that the chain has not been added to MetaMask.
@@ -253,14 +255,14 @@ const Home: NextPage = () => {
         method: 'wallet_addEthereumChain',
         params: [
           {
-            chainId: MUMBAI_CHAIN_ID,
-            chainName: 'Polygon Mumbai',
+            chainId: POLYGON_MAINNET,
+            chainName: 'Polygon Mainnet',
             nativeCurrency: {
               name: 'MATIC',
               symbol: 'MATIC',
               decimals: 18,
             },
-            rpcUrls: ['https://rpc-mumbai.maticvigil.com'],
+            rpcUrls: ['https://rpc-mainnet.maticvigil.com/'],
           },
         ],
       });
@@ -273,7 +275,7 @@ const Home: NextPage = () => {
         const resp = await window.ethereum.request({ method: 'eth_chainId' });
         console.log('Connected to chainId: ' + resp);
 
-        if (resp !== MUMBAI_CHAIN_ID) {
+        if (resp !== POLYGON_MAINNET) {
           toast('Wrong network', {
             hideProgressBar: true,
             autoClose: 3000,
@@ -448,7 +450,13 @@ const Home: NextPage = () => {
       });
 
       setButtonEnabled(false);
-      recaptchaRef.current?.reset();
+      triggerCooldown();
+
+      toast('Wait 33 seconds to buy again', {
+        hideProgressBar: true,
+        autoClose: 3000,
+        type: 'info',
+      });
     } catch (error) {
       console.error(error);
     } finally {
@@ -480,6 +488,15 @@ const Home: NextPage = () => {
 
       alert(errTyped?.message || 'Something went wrong');
     }
+  }
+
+  function triggerCooldown() {
+    recaptchaRef.current?.reset();
+    setIsCooldownActive(true);
+
+    setTimeout(() => {
+      setIsCooldownActive(false);
+    }, 33000);
   }
 
   return (
@@ -615,7 +632,7 @@ const Home: NextPage = () => {
             <ReCAPTCHA
               ref={recaptchaRef}
               size="normal"
-              sitekey={'6Ld-1C0iAAAAAAlvcKgLOG4dWUsWvJ6rQxsK6vaW'}
+              sitekey={'6Lcb1DAiAAAAALgxKdSDZ3SX1rmuNamMHR5hMtZH'}
               onChange={onReCAPTCHAChange}
             />
           </div>

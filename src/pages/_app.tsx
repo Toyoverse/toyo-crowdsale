@@ -10,7 +10,7 @@ import {
 import { ToastContainer } from 'react-toastify';
 import { ChainId, ThirdwebProvider } from '@thirdweb-dev/react';
 
-const activeChainId = ChainId.Mumbai;
+const activeChainId = ChainId.Polygon;
 
 const supportedChains = [ChainId.Polygon, ChainId.Mumbai];
 
