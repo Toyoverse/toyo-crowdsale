@@ -598,7 +598,7 @@ const Home: NextPage = () => {
             </div>
             <div className="flex items-center">
               <p className="text-center text-white text-xl pt-2 font-barlow">
-                U$ {formattedTotalToyoInUSD || '-'}
+                ~U$ {formattedTotalToyoInUSD || '-'}
               </p>
             </div>
           </div>
