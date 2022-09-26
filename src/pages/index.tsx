@@ -389,6 +389,7 @@ const Home: NextPage = () => {
       await contract?.methods.buyTokens(address, typeIDBN, quantity).send({
         from: address,
         value: 0,
+        gasPrice: 75000000000, // 75 Gwei
       });
 
       toast('Tokens minted, check your wallet!', {
@@ -569,7 +570,7 @@ const Home: NextPage = () => {
               onChange={onReCAPTCHAChange}
             />
           </div>
-          <div className="flex flex-col mx-12">
+          <div className="flex flex-col">
             <div className="flex flex-row justify-between">
               <p className="text-white font-barlow">Common Edition</p>
               <p className="text-white font-barlow">52%</p>
@@ -668,7 +669,7 @@ const Home: NextPage = () => {
           </a>
         </div>
       </Section>
-      <footer className="flex flex-col items-center justify-center bg-main bg-cover min-w-full lg:h-80 h-104 3xl:px-96 lg:px-24 px-12">
+      <footer className="flex flex-col items-center justify-center bg-main bg-cover bg-center min-w-full lg:h-80 h-104 3xl:px-96 lg:px-24 px-12">
         <div className="flex flex-col lg:flex-row items-center justify-between min-w-full">
           <div className="flex flex-row">
             <div className="relative w-40 h-40">
