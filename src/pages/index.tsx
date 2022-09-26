@@ -32,6 +32,7 @@ import {
   TOYO_COINMARKETCAP_ID,
   COINMARKETCAP_QUOTE_CURRENCY,
   TYPE_ID,
+  MUMBAI_CHAIN_ID,
 } from '../constants';
 
 interface MetamaskRPCError {
@@ -66,6 +67,7 @@ const Home: NextPage = () => {
   const [isSalePaused, setIsSalePaused] = useState(false);
 
   const [isMetamaskInstalled, setIsMetamaskInstalled] = useState(false);
+  const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
 
   const recaptchaRef = createRef<ReCAPTCHA>();
 
@@ -162,6 +164,10 @@ const Home: NextPage = () => {
     getTOYOPrice();
   }, []);
 
+  useEffect(() => {
+    checkConnectedNetwork();
+  }, []);
+
   async function getTotalSupply() {
     try {
       const resp = await contract?.methods.getTotalSupply(TYPE_ID).call();
@@ -225,20 +231,62 @@ const Home: NextPage = () => {
     }
   }, [contract]);
 
-  useEffect(() => {
-    async function getConnectedNetwork() {
-      if (isMetamaskInstalled && window.ethereum.request) {
-        try {
-          const resp = await window.ethereum.request({ method: 'eth_chainId' });
-          console.log('Connected to chainId: ' + resp);
-        } catch (error) {
-          console.error(error);
+  async function switchNetwork() {
+    if (isMetamaskInstalled && window.ethereum.request) {
+      window.ethereum
+        .request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: MUMBAI_CHAIN_ID }],
+        })
+        .catch((switchError) => {
+          // This error code indicates that the chain has not been added to MetaMask.
+          if (switchError.code === 4902) {
+            addNetwork();
+          }
+        });
+    }
+  }
+
+  async function addNetwork() {
+    if (isMetamaskInstalled && window.ethereum.request) {
+      window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [
+          {
+            chainId: MUMBAI_CHAIN_ID,
+            chainName: 'Polygon Mumbai',
+            nativeCurrency: {
+              name: 'MATIC',
+              symbol: 'MATIC',
+              decimals: 18,
+            },
+            rpcUrls: ['https://rpc-mumbai.maticvigil.com'],
+          },
+        ],
+      });
+    }
+  }
+
+  async function checkConnectedNetwork() {
+    if (isMetamaskInstalled && window.ethereum.request) {
+      try {
+        const resp = await window.ethereum.request({ method: 'eth_chainId' });
+        console.log('Connected to chainId: ' + resp);
+
+        if (resp !== MUMBAI_CHAIN_ID) {
+          toast('Wrong network', {
+            hideProgressBar: true,
+            autoClose: 3000,
+            type: 'error',
+          });
+
+          await switchNetwork();
         }
+      } catch (error) {
+        console.error(error);
       }
     }
-
-    getConnectedNetwork();
-  }, []);
+  }
 
   async function addToWallet() {
     if (!isMetamaskInstalled) {
@@ -311,6 +359,8 @@ const Home: NextPage = () => {
           autoClose: 3000,
           type: 'success',
         });
+
+        await checkConnectedNetwork();
       } catch (error) {
         const ethError = error as MetamaskRPCError;
 
@@ -361,6 +411,7 @@ const Home: NextPage = () => {
         .approve(contracts.nftTokenCrowdsaleAddress, toweiToyoPrice)
         .send({
           from: address,
+          gasPrice: 50000000000, // 50 Gwei
         });
 
       await buyTokens();
@@ -380,8 +431,6 @@ const Home: NextPage = () => {
       return;
     }
 
-    // TODO verify if Network is correct
-
     const quantity = web3?.utils.toBN(selectedQuantity);
     const typeIDBN = web3?.utils.toBN(TYPE_ID);
 
@@ -389,7 +438,7 @@ const Home: NextPage = () => {
       await contract?.methods.buyTokens(address, typeIDBN, quantity).send({
         from: address,
         value: 0,
-        gasPrice: 75000000000, // 75 Gwei
+        gasPrice: 50000000000, // 75 Gwei
       });
 
       toast('Tokens minted, check your wallet!', {
@@ -509,7 +558,7 @@ const Home: NextPage = () => {
               priority
             />
           </div>
-          <div className="mt-4">
+          <div>
             <h1 className="font-bold text-center text-4xl text-white font-saira">
               Xeon-1 Box
             </h1>
@@ -517,7 +566,7 @@ const Home: NextPage = () => {
               {minted || '-'} minted / {maxSupply || '-'} max supply
             </p>
           </div>
-          <div className="flex flex-row items-center justify-between mt-4 mx-16">
+          <div className="flex flex-row items-center justify-between mt-4 mx-8">
             <div className="flex flex-row justify-center items-center ml-4">
               <div className="relative w-7 h-7 mr-2">
                 <Image
@@ -538,7 +587,7 @@ const Home: NextPage = () => {
               </p>
             </div>
           </div>
-          <div className="flex flex-row items-center justify-between mt-4 mx-16">
+          <div className="flex flex-row items-center justify-between mt-4 mx-8">
             <div className="flex items-center">
               <p className="text-white text-2xl ml-2 font-barlow">Quantity:</p>
             </div>
