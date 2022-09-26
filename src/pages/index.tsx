@@ -155,11 +155,13 @@ const Home: NextPage = () => {
 
         const fixedPrice = parseFloat(toyoPrice.toFixed(2));
 
-        setToyoPrice(fixedPrice);
+        setToyoPrice(0.03);
       } catch (error) {
         const errTyped = error as Error;
 
         console.error(errTyped?.message);
+      } finally {
+        setToyoPrice(0.03);
       }
     }
 
@@ -546,12 +548,12 @@ const Home: NextPage = () => {
               'Select the quantity and click "MINT NOW" below the box you want to mint into your wallet. Limit of 9 boxes per transaction.'
             }
           />
-          <Step
+          {/* <Step
             title={'Step 4'}
             text={
               'To mint the boxes, you must wait 33 seconds cooldown and re-check the reCAPTCHA.'
             }
-          />
+          /> */}
         </div>
         <div className="flex justify-center items-center py-32">
           <Button
