@@ -3,8 +3,9 @@ import BN from 'bn.js';
 import Web3 from 'web3';
 import { AbiItem } from 'web3-utils';
 import { Contract } from 'web3-eth-contract';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, createRef } from 'react';
 import { toast } from 'react-toastify';
+import ReCAPTCHA from 'react-google-recaptcha';
 import Head from 'next/head';
 import Image from 'next/image';
 import ToyoLogo from '@assets/toyo_logo---Copia.png';
@@ -12,6 +13,7 @@ import XeonLogo from '@assets/TITLESTOP_BOTTOM-2.png';
 import XeonBox from '@assets/Xeon-Pier-0-Closed-2048.png';
 import ToyoTokenIcon from '@assets/icons/toyo_token_icon.png';
 import MintNowButton from '@assets/buttons/mint_btt.png';
+import MintNowButtonDisabled from '@assets/buttons/mint_disabled.png';
 import XeonToyoList from '@assets/HORIZONTAL_RARITY-RULE2022.png';
 import LearnMoreButton from '@assets/buttons/learn_more.png';
 import OpenSeaButton from '@assets/buttons/opensea.png';
@@ -52,32 +54,18 @@ const Home: NextPage = () => {
   const [maxSupply, setMaxSupply] = useState(0);
   const [purchaseCap, setPurchaseCap] = useState(1);
   const [accountConnected, setAccountConnected] = useState(false);
+  const [buttonEnabled, setButtonEnabled] = useState(false);
+
+  const [isMetamaskInstalled, setIsMetamaskInstalled] = useState(false);
+
+  const recaptchaRef = createRef<ReCAPTCHA>();
 
   const totalPrice = Number(initialToyoPrice) * Number(selectedQuantity);
 
   useEffect(() => {
     async function isMetamaskInstalled() {
-      if (window.ethereum?.request) {
-        const resp = await window.ethereum.request({
-          method: 'eth_requestAccounts',
-        });
-
-        if (resp.length > 0) {
-          setAccountConnected(true);
-          setAddress(resp[0]);
-
-          const w3 = new Web3(window.ethereum);
-          setWeb3(w3);
-
-          const abi: AbiItem | any = NftTokenCrowdsale.abi;
-
-          const c = new w3.eth.Contract(
-            abi,
-            contracts.nftTokenCrowdsaleAddress,
-          );
-
-          setContract(c);
-        }
+      if (window.ethereum) {
+        setIsMetamaskInstalled(true);
       }
     }
 
@@ -125,7 +113,7 @@ const Home: NextPage = () => {
   }
 
   useEffect(() => {
-    if (contract) {
+    if (contract && isMetamaskInstalled) {
       async function getSupply() {
         await getTotalSupply();
         await getMaxSupply();
@@ -139,7 +127,7 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     async function getConnectedNetwork() {
-      if (window.ethereum.request) {
+      if (isMetamaskInstalled && window.ethereum.request) {
         try {
           const resp = await window.ethereum.request({ method: 'eth_chainId' });
           console.log('Connected to chainId: ' + resp);
@@ -153,6 +141,14 @@ const Home: NextPage = () => {
   }, []);
 
   async function addToWallet() {
+    if (!isMetamaskInstalled) {
+      return toast('Please install metamask to continue', {
+        hideProgressBar: true,
+        autoClose: 3000,
+        type: 'error',
+      });
+    }
+
     if (window.ethereum?.request) {
       try {
         await window.ethereum.request({
@@ -175,11 +171,41 @@ const Home: NextPage = () => {
   }
 
   async function connectWallet() {
+    if (!isMetamaskInstalled) {
+      return toast('Please install metamask to continue', {
+        hideProgressBar: true,
+        autoClose: 3000,
+        type: 'error',
+      });
+    }
+
+    if (accountConnected) {
+      return;
+    }
+
     if (window.ethereum?.request) {
       try {
         const account = await window.ethereum.request({
           method: 'eth_requestAccounts',
         });
+
+        if (account.length > 0) {
+          setAccountConnected(true);
+          setAddress(account[0]);
+
+          const w3 = new Web3(window.ethereum);
+          setWeb3(w3);
+
+          const abi: AbiItem | any = NftTokenCrowdsale.abi;
+
+          const c = new w3.eth.Contract(
+            abi,
+            contracts.nftTokenCrowdsaleAddress,
+          );
+
+          setContract(c);
+        }
+
         setAccountConnected(true);
         setAddress(account.toString());
         toast('Wallet Connected!', {
@@ -206,10 +232,6 @@ const Home: NextPage = () => {
         }
       }
     }
-  }
-
-  async function disconnectMetamask() {
-    console.log('Log');
   }
 
   async function approveBuy() {
@@ -241,7 +263,7 @@ const Home: NextPage = () => {
   }
 
   async function buyTokens() {
-    if (!accountConnected) {
+    if (!accountConnected || !isMetamaskInstalled) {
       toast('Connect wallet!', {
         hideProgressBar: true,
         autoClose: 3000,
@@ -272,6 +294,34 @@ const Home: NextPage = () => {
       });
     } catch (error) {
       console.error(error);
+    }
+  }
+
+  async function onReCAPTCHAChange(captchaCode: string | null) {
+    if (!captchaCode) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/google', {
+        method: 'POST',
+        body: JSON.stringify({ captcha: captchaCode }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        setButtonEnabled(true);
+      } else {
+        // Else throw an error with the message returned
+        // from the API
+        console.log('CAPTCHA not ok', response.json());
+      }
+    } catch (error) {
+      const errTyped = error as Error;
+
+      alert(errTyped?.message || 'Something went wrong');
     }
   }
 
@@ -334,14 +384,10 @@ const Home: NextPage = () => {
           />
         </div>
         <div className="flex py-32">
-          {accountConnected ? (
-            <Button
-              bg={'metamask-connected'}
-              onClick={() => disconnectMetamask()}
-            />
-          ) : (
-            <Button bg={'metamask-login'} onClick={() => connectWallet()} />
-          )}
+          <Button
+            bg={accountConnected ? 'metamask-connected' : 'metamask-login'}
+            onClick={() => connectWallet()}
+          />
           <Button bg="add-toyo" onClick={() => addToWallet()} />
         </div>
       </Section>
@@ -395,15 +441,27 @@ const Home: NextPage = () => {
             />
           </div>
           <div className="flex flex-row justify-center">
-            <button className="relative w-64 h-28" onClick={approveBuy}>
+            <button
+              disabled={!buttonEnabled}
+              className="relative w-64 h-28"
+              onClick={approveBuy}
+            >
               <Image
-                src={MintNowButton}
+                src={buttonEnabled ? MintNowButton : MintNowButtonDisabled}
                 layout="fill"
                 alt="Mint now button."
                 objectFit="contain"
                 priority
               />
             </button>
+          </div>
+          <div className="flex flex-row justify-center mb-4">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              size="normal"
+              sitekey={'6Ld-1C0iAAAAAAlvcKgLOG4dWUsWvJ6rQxsK6vaW'}
+              onChange={onReCAPTCHAChange}
+            />
           </div>
           <div className="flex flex-col mx-16">
             <div className="flex flex-row justify-between">
