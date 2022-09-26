@@ -581,7 +581,7 @@ const Home: NextPage = () => {
               {minted || '-'} minted / {maxSupply || '-'} max supply
             </p>
           </div>
-          <div className="flex flex-row items-center justify-between mt-4 mx-8">
+          <div className="flex flex-row items-center justify-between mt-4 mx-4">
             <div className="flex flex-row justify-center items-center ml-4">
               <div className="relative w-7 h-7 mr-2">
                 <Image
@@ -602,7 +602,7 @@ const Home: NextPage = () => {
               </p>
             </div>
           </div>
-          <div className="flex flex-row items-center justify-between mt-4 mx-8">
+          <div className="flex flex-row items-center justify-between mt-4 mx-4">
             <div className="flex items-center">
               <p className="text-white text-2xl ml-2 font-barlow">Quantity:</p>
             </div>
