@@ -235,30 +235,37 @@ const Home: NextPage = () => {
   }
 
   async function approveBuy() {
-    if (window.ethereum) {
-      const toyoApproveContractAbi: AbiItem | any = ToyoGovernanceToken.abi;
+    if (!accountConnected || !isMetamaskInstalled) {
+      toast('Connect wallet!', {
+        hideProgressBar: true,
+        autoClose: 3000,
+        type: 'error',
+      });
+      return;
+    }
 
-      const w3 = new Web3(window.ethereum);
+    const toyoApproveContractAbi: AbiItem | any = ToyoGovernanceToken.abi;
 
-      const c = new w3.eth.Contract(
-        toyoApproveContractAbi,
-        contracts.toyoGovernanceToken,
-      );
+    const w3 = new Web3(window.ethereum);
 
-      const toyopriceBN = web3?.utils.toBN(totalPrice);
-      const toweiToyoPrice = web3?.utils.toWei(toyopriceBN as BN, 'ether');
+    const c = new w3.eth.Contract(
+      toyoApproveContractAbi,
+      contracts.toyoGovernanceToken,
+    );
 
-      try {
-        await c.methods
-          .approve(contracts.nftTokenCrowdsaleAddress, toweiToyoPrice)
-          .send({
-            from: address,
-          });
+    const toyopriceBN = web3?.utils.toBN(totalPrice);
+    const toweiToyoPrice = web3?.utils.toWei(toyopriceBN as BN, 'ether');
 
-        await buyTokens();
-      } catch (error) {
-        console.error(error);
-      }
+    try {
+      await c.methods
+        .approve(contracts.nftTokenCrowdsaleAddress, toweiToyoPrice)
+        .send({
+          from: address,
+        });
+
+      await buyTokens();
+    } catch (error) {
+      console.error(error);
     }
   }
 
