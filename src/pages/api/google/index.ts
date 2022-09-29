@@ -14,9 +14,11 @@ export default async function handler(
       });
     }
 
+    const key = await getStaticProps();
+
     try {
       const response = await fetch(
-        `https://www.google.com/recaptcha/api/siteverify?secret=6Lcb1DAiAAAAAMO2z_lV4JUoAigrTYU32FbB4mjT&response=${captcha}`,
+        `https://www.google.com/recaptcha/api/siteverify?secret=${key}&response=${captcha}`,
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
@@ -48,4 +50,10 @@ export default async function handler(
   }
 
   return res.status(404).send('Not found');
+}
+
+export async function getStaticProps() {
+  const captchaKey = process.env.CAPTCHA_SECRET_KEY;
+
+  return captchaKey || '';
 }

@@ -10,13 +10,15 @@ export default async function handler(
 
   if (method === 'GET') {
     try {
+      const key = await getStaticProps();
+
       const response = await fetch(
         `https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?id=${TOYO_ID}`,
         {
           headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json',
-            'X-CMC_PRO_API_KEY': '7d2336e0-8cf2-41e2-8caa-9d87bf5d6f15',
+            'X-CMC_PRO_API_KEY': key,
           },
           method: 'GET',
         },
@@ -31,4 +33,10 @@ export default async function handler(
   }
 
   return res.status(404).send('Not found');
+}
+
+export async function getStaticProps() {
+  const proKey = process.env.COINMARKETCAP_SECRET_KEY;
+
+  return proKey || '';
 }

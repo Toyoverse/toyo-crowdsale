@@ -32,8 +32,6 @@ import {
   TOYO_COINMARKETCAP_ID,
   COINMARKETCAP_QUOTE_CURRENCY,
   TYPE_ID,
-  MUMBAI_CHAIN_ID,
-  POLYGON_MAINNET,
 } from '../constants';
 
 interface MetamaskRPCError {
@@ -238,7 +236,7 @@ const Home: NextPage = () => {
       window.ethereum
         .request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: POLYGON_MAINNET }],
+          params: [{ chainId: process.env.NEXT_PUBLIC_CHAIN_ID }],
         })
         .catch((switchError) => {
           // This error code indicates that the chain has not been added to MetaMask.
@@ -255,14 +253,14 @@ const Home: NextPage = () => {
         method: 'wallet_addEthereumChain',
         params: [
           {
-            chainId: POLYGON_MAINNET,
-            chainName: 'Polygon Mainnet',
+            chainId: process.env.NEXT_PUBLIC_CHAIN_ID,
+            chainName: process.env.NEXT_PUBLIC_CHAIN_NAME,
             nativeCurrency: {
               name: 'MATIC',
               symbol: 'MATIC',
               decimals: 18,
             },
-            rpcUrls: ['https://rpc-mainnet.maticvigil.com/'],
+            rpcUrls: [process.env.NEXT_PUBLIC_CHAIN_RPC_URL],
           },
         ],
       });
@@ -275,7 +273,7 @@ const Home: NextPage = () => {
         const resp = await window.ethereum.request({ method: 'eth_chainId' });
         console.log('Connected to chainId: ' + resp);
 
-        if (resp !== POLYGON_MAINNET) {
+        if (resp !== process.env.NEXT_PUBLIC_CHAIN_ID) {
           toast('Wrong network', {
             hideProgressBar: true,
             autoClose: 3000,
@@ -632,7 +630,7 @@ const Home: NextPage = () => {
             <ReCAPTCHA
               ref={recaptchaRef}
               size="normal"
-              sitekey={'6Lcb1DAiAAAAALgxKdSDZ3SX1rmuNamMHR5hMtZH'}
+              sitekey={process.env.NEXT_PUBLIC_CAPTCHA_KEY as string}
               onChange={onReCAPTCHAChange}
             />
           </div>
