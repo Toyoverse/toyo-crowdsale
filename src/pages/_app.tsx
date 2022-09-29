@@ -8,11 +8,6 @@ import {
   DehydratedState,
 } from '@tanstack/react-query';
 import { ToastContainer } from 'react-toastify';
-import { ChainId, ThirdwebProvider } from '@thirdweb-dev/react';
-
-const activeChainId = ChainId.Polygon;
-
-const supportedChains = [ChainId.Polygon, ChainId.Mumbai];
 
 function MyApp({
   Component,
@@ -33,15 +28,10 @@ function MyApp({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThirdwebProvider
-        supportedChains={supportedChains}
-        desiredChainId={activeChainId}
-      >
-        <Hydrate state={pageProps.dehydratedState}>
-          <Component {...pageProps} />
-          <ToastContainer />
-        </Hydrate>
-      </ThirdwebProvider>
+      <Hydrate state={pageProps.dehydratedState}>
+        <Component {...pageProps} />
+        <ToastContainer />
+      </Hydrate>
     </QueryClientProvider>
   );
 }
