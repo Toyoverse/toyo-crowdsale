@@ -239,7 +239,6 @@ const Home: NextPage = () => {
           params: [{ chainId: process.env.NEXT_PUBLIC_CHAIN_ID }],
         })
         .catch((switchError) => {
-          // This error code indicates that the chain has not been added to MetaMask.
           if (switchError.code === 4902) {
             addNetwork();
           }
